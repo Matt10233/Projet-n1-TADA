@@ -538,7 +538,8 @@ while True:
                                         
                                     if receiver == KucoinAddrs :
                                         ReceiverCourt = "Kucoin"
-                                    
+
+                                    last_fee = None
                                     message = f"🔄 Transfer of {NombreSAV} {SenderTicker} ({PriceValue}$) made between {SenderCourt} and {ReceiverCourt} on {TimestampLisible}\n['{SenderCourt}' ---> '{ReceiverCourt}']\n\n$TADA price : [{PriceArrondi}$US]\n\nSource : {Link}"
                                     print("Cette transaction est un transfert")
                                     print(message)
@@ -584,108 +585,121 @@ while True:
 
 
                             elif FunctionTransac == "ESDTTransfer" :
-                                print(FunctionTransac)
-                                statut = "Achat"
-                                print("Statut de la transaction :", statut)
-
-                                if "originalTxHash" in transaction:
-                                    TxIDForLink2 = transaction["originalTxHash"]
-                                else:
-                                    TxIDForLink2 = transaction.get("txHash")
-
-                                AssetInfo = transaction["action"]["arguments"]["transfers"][0]
-                                Nombre_SAV = int(AssetInfo["value"]) / (10 ** AssetInfo["decimals"])
-                                NombreSAV = round(Nombre_SAV, 2)
-                                TxID2 = transaction["action"]["arguments"]["transfers"][0]["value"]   
-                                print("ID (valeur) de la transaction :", TxID2)
+                                IsATransfer = transaction["action"]["arguments"]["transfers"][0]["type"]
+                                #print(IsATransfer)
+                                try:
+                                    IsARealTransac = transaction["senderAssets"]["tags"][0]
+                                    IsARealTransac2 = transaction["senderAssets"]["tags"][1]
+                                except Exception:
+                                    IsARealTransac = "rien"
+                                    IsARealTransac2 = "rien"
+                                print(IsARealTransac)
+                                print(IsARealTransac2)
                                 
-                                if TxID2 == last_fee:
-                                    continue
+                                if IsATransfer == "FungibleESDT" and IsARealTransac != "farm" and IsARealTransac2 != "farm" and IsARealTransac != "community" and IsARealTransac2 != "community" and IsARealTransac != "rien" and IsARealTransac2 != "rien" and IsARealTransac != "orderbook" and IsARealTransac2 != "orderbook":
+                                    print(FunctionTransac)
+                                    statut = "Achat"
+                                    print("Statut de la transaction :", statut)
+    
+                                    if "originalTxHash" in transaction:
+                                        TxIDForLink2 = transaction["originalTxHash"]
+                                    else:
+                                        TxIDForLink2 = transaction.get("txHash")
+    
+                                    AssetInfo = transaction["action"]["arguments"]["transfers"][0]
+                                    Nombre_SAV = int(AssetInfo["value"]) / (10 ** AssetInfo["decimals"])
+                                    NombreSAV = round(Nombre_SAV, 2)
+                                    TxID2 = transaction["action"]["arguments"]["transfers"][0]["value"]   
+                                    print("ID (valeur) de la transaction :", TxID2)
                                     
-                                #deuxieme verification qui check si le montant de cette transaction est presente dans les 10 derniere
-                                #si c'est le cas il passe a la suivante. (risque de manquer des transactions non doublon dans de rares cas)
-                                Verif10DernieresTransac()
-                                Doublon = Verif10DernieresTransac()
-                                
-                                if Doublon is True :
-                                    continue
-                                    
-                                last_fee = TxID2
-
-                                receiver = transaction["receiver"]
-                                ReceiverCourt = receiver[:6] + "..." + receiver[-3:]
-                                sender = transaction["sender"]
-                                SenderCourt = sender[:6] + "..." + sender[-3:]
-                                timestamp = transaction["timestamp"]
-                                ReceiverTicker = AssetInfo["ticker"]
-                                if "receiverAssets" in transaction:
-                                    ReceiverName = transaction["receiverAssets"]["name"]
-                                else:
-                                    ReceiverName = ReceiverCourt
-
-                                if "senderAssets" in transaction:
-                                    SenderName = transaction["senderAssets"]["name"]
-                                else:
-                                     SenderName = SenderCourt
-
-                                if TxIDForLink2 is not None:
-                                    Link2 = LinkSource + TxIDForLink2
-                                else:
-                                    Erreur = "ERROR"
-                                    Link2 = LinkSource + Erreur
-
-                                TimestampLisible = datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d at %H:%M:%S')
-                                DateActuelle = datetime.now().date()
-                                DateFormat = datetime.now().strftime("%Y-%m-%d")
-
-                                print("Informations de la transaction :")
-                                print("    Receiver :", receiver)
-                                print("    Sender :", sender)
-                                print("    Timestamp (humain) :", TimestampLisible)
-                                print("    Ticker :", ReceiverTicker)
-                                print("    Valeur :", NombreSAV)
-                                print("    Source :", Link2)
-
-                                GetPrice()
-                                price = GetPrice()
-                                PriceValue = NombreSAV * price
-                                print(PriceValue)
-
-                                value = price * NombreSAV
-                                ValueArrondi = round(value, 2)
-                                value = f"{ValueArrondi:.2f}"
-                                
-                                PriceArrondi = round(price, 4)
-                                PriceArrondi = f"{PriceArrondi:.4f}"
-                                print(PriceArrondi)
-
-                                TransferSenderAddrs = not sender.startswith("erd1qqqq")
-                                TransferReceiverAddrs = not receiver.startswith("erd1qqqq")
-
-                                if TransferSenderAddrs and TransferReceiverAddrs:
-                                    KucoinAddrs = "erd1ty4pvmjtl3mnsjvnsxgcpedd08fsn83f05tu0v5j23wnfce9p86snlkdyy"
-                                    
-                                    if sender == KucoinAddrs :
-                                        SenderCourt = "Kucoin"
+                                    if TxID2 == last_fee:
+                                        continue
                                         
-                                    if receiver == KucoinAddrs :
-                                        ReceiverCourt = "Kucoin"
+                                    #deuxieme verification qui check si le montant de cette transaction est presente dans les 10 derniere
+                                    #si c'est le cas il passe a la suivante. (risque de manquer des transactions non doublon dans de rares cas)
+                                    Verif10DernieresTransac()
+                                    Doublon = Verif10DernieresTransac()
                                     
-                                    message = f"🔄 Transfer of {NombreSAV} ${ReceiverTicker} ({value}$) made between {SenderCourt} and {ReceiverCourt} on {TimestampLisible}\n['{SenderCourt}' ---> '{ReceiverCourt}']\n\n$TADA price : [{PriceArrondi}$US]\n\nSource : {Link2}"
-                                    print("Cette transaction est un transfert")
-                                    print(message)
-                                else:
-                                    message = f"🟢 A purchase of {NombreSAV} ${ReceiverTicker} ({value}$) just took place ! \n(on {TimestampLisible})\n\n$TADA price : [{PriceArrondi}$US]\n\nSource : {Link2}"
-                                    print("Cette transaction est un achat")
-                                    print(message)
-                                    Link = Link2
-                                    EnregistreTransac()
+                                    if Doublon is True :
+                                        continue
+                                        
+                                    last_fee = TxID2
+    
+                                    receiver = transaction["receiver"]
+                                    ReceiverCourt = receiver[:6] + "..." + receiver[-3:]
+                                    sender = transaction["sender"]
+                                    SenderCourt = sender[:6] + "..." + sender[-3:]
+                                    timestamp = transaction["timestamp"]
+                                    ReceiverTicker = AssetInfo["ticker"]
+                                    if "receiverAssets" in transaction:
+                                        ReceiverName = transaction["receiverAssets"]["name"]
+                                    else:
+                                        ReceiverName = ReceiverCourt
+    
+                                    if "senderAssets" in transaction:
+                                        SenderName = transaction["senderAssets"]["name"]
+                                    else:
+                                         SenderName = SenderCourt
+    
+                                    if TxIDForLink2 is not None:
+                                        Link2 = LinkSource + TxIDForLink2
+                                    else:
+                                        Erreur = "ERROR"
+                                        Link2 = LinkSource + Erreur
+    
+                                    TimestampLisible = datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d at %H:%M:%S')
+                                    DateActuelle = datetime.now().date()
+                                    DateFormat = datetime.now().strftime("%Y-%m-%d")
+    
+                                    print("Informations de la transaction :")
+                                    print("    Receiver :", receiver)
+                                    print("    Sender :", sender)
+                                    print("    Timestamp (humain) :", TimestampLisible)
+                                    print("    Ticker :", ReceiverTicker)
+                                    print("    Valeur :", NombreSAV)
+                                    print("    Source :", Link2)
+    
+                                    GetPrice()
+                                    price = GetPrice()
+                                    PriceValue = NombreSAV * price
+                                    print(PriceValue)
+    
+                                    value = price * NombreSAV
+                                    ValueArrondi = round(value, 2)
+                                    value = f"{ValueArrondi:.2f}"
+                                    
+                                    PriceArrondi = round(price, 4)
+                                    PriceArrondi = f"{PriceArrondi:.4f}"
+                                    print(PriceArrondi)
+    
+                                    TransferSenderAddrs = not sender.startswith("erd1qqqq")
+                                    TransferReceiverAddrs = not receiver.startswith("erd1qqqq")
+    
+                                    if TransferSenderAddrs and TransferReceiverAddrs:
+                                        KucoinAddrs = "erd1ty4pvmjtl3mnsjvnsxgcpedd08fsn83f05tu0v5j23wnfce9p86snlkdyy"
+                                        
+                                        if sender == KucoinAddrs :
+                                            SenderCourt = "Kucoin"
+                                            
+                                        if receiver == KucoinAddrs :
+                                            ReceiverCourt = "Kucoin"
 
-                                if PriceValue > 100 :
-                                    SendDiscord()
-
-                                if PriceValue > 20000 :
-                                    PostTheTweet()
+                                        last_fee = None
+                                        message = f"🔄 Transfer of {NombreSAV} ${ReceiverTicker} ({value}$) made between {SenderCourt} and {ReceiverCourt} on {TimestampLisible}\n['{SenderCourt}' ---> '{ReceiverCourt}']\n\n$TADA price : [{PriceArrondi}$US]\n\nSource : {Link2}"
+                                        print("Cette transaction est un transfert")
+                                        print(message)
+                                    else:
+                                        message = f"🟢 A purchase of {NombreSAV} ${ReceiverTicker} ({value}$) just took place ! \n(on {TimestampLisible})\n\n$TADA price : [{PriceArrondi}$US]\n\nSource : {Link2}"
+                                        print("Cette transaction est un achat")
+                                        print(message)
+                                        Link = Link2
+                                        EnregistreTransac()
+    
+                                    if PriceValue > 100 :
+                                        SendDiscord()
+    
+                                    if PriceValue > 20000 :
+                                        PostTheTweet()
 
             else:
                 print("Aucune transaction trouvée.")
